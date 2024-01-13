@@ -19,17 +19,24 @@ from sklearn.preprocessing import LabelEncoder
 # Load the dataset
 df = pd.read_csv('test.csv')
 correlation_matrix = df.corr(numeric_only=True)
-plt.figure(figsize=(10, 8))
-sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
-plt.title('Correlation Heatmap of Dataset Features')
+plt.figure(figsize=(12, 12))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', annot_kws={'size':12})  # Increase annotation text size
+plt.title('Correlation Heatmap of Dataset Features', fontsize=14)  # Increase title font size
+plt.xticks(fontsize=12)  # Increase x-axis tick font size
+plt.yticks(fontsize=12)  # Increase y-axis tick font size
 plt.show()
 
+
+# Modify 'Sex', 'Qualifications', and 'Habitat' features
 # Modify 'Sex', 'Qualifications', and 'Habitat' features
 df['Sex'] = LabelEncoder().fit_transform(df['Sex'])
 qualification_mapping = {'UG': 0, 'PG': 1, 'Phd/M.phil': 2}
 df['Qualifications'] = df['Qualifications'].map(qualification_mapping)
-habitat_mapping = {'Rural': 0, 'Urban Municipal Area': 1}
+habitat_mapping = {'Rural': 0, 'Urban Municipal Area': 1, 'Metropolitan City': 2}
 df['Habitat'] = df['Habitat'].map(habitat_mapping)
+
+# Rest of the code remains the same
+
 
 
 def plot_enhanced_boxplot(column, title):
@@ -65,11 +72,16 @@ plot_enhanced_boxplot('anxiety score', 'Distribution of Anxiety Scores')
 df['Depression'] = ((df['Well-being score'] < df['Well-being score'].median()) &
                     (df['anxiety score'] > df['anxiety score'].median())).astype(int)
 df.drop(['Well-being score', 'Well-being category', 'anxiety score', 'anxiety category', 'Media category',
-         'Age Category'], axis=1, inplace=True)
+         'Age Category'], axis=1, inplace=True) 
 
 # Balance and enlarge the dataset
 df_depressed = df[df['Depression'] == 1]
 df_not_depressed = df[df['Depression'] == 0]
+depression_counts_before_balancing = df['Depression'].value_counts()
+plt.figure(figsize=(8, 6))
+plt.pie(depression_counts_before_balancing, labels=['Non-Depressed', 'Depressed'], autopct='%1.1f%%', startangle=140)
+plt.title('Distribution of Depression Before Balancing the Dataset')
+plt.show()
 df_not_depressed_downsampled = resample(df_not_depressed, replace=False, n_samples=len(df_depressed), random_state=42)
 df_balanced = pd.concat([df_depressed, df_not_depressed_downsampled])
 df_enlarged = pd.concat([df_balanced] * 2).reset_index(drop=True)
@@ -172,9 +184,11 @@ for model_name, (model, params, importance_method) in models.items():
     print(f"Model: {model_name}")
     print(report)
     sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues')
-    plt.title(f'Confusion Matrix for {model_name}')
-    plt.ylabel('True Label')
-    plt.xlabel('Predicted Label')
+    plt.title(f'Confusion Matrix for {model_name}', fontsize=14)
+    plt.ylabel('True Label', fontsize=12)
+    plt.xlabel('Predicted Label', fontsize=12)
+    plt.xticks(fontsize=10)
+    plt.yticks(fontsize=10)
     plt.show()
 
     # Feature importance evaluation
@@ -182,17 +196,29 @@ for model_name, (model, params, importance_method) in models.items():
         if hasattr(grid_search.best_estimator_.named_steps['classifier'], 'coef_'):
             feature_importances = grid_search.best_estimator_.named_steps['classifier'].coef_[0]
             sns.barplot(x=feature_importances, y=preprocessor.get_feature_names_out())
-            plt.title(f'Feature Importances in {model_name}')
+            plt.title(f'Feature Importances in {model_name}', fontsize=14)
+            plt.xticks(fontsize=18)
+            plt.yticks(fontsize=18)
+            plt.xlabel('Importance', fontsize=18)
+            plt.ylabel('Features', fontsize=18)
+            plt.tight_layout()
             plt.show()
     elif importance_method == 'feature_importances':
         feature_importances = grid_search.best_estimator_.named_steps['classifier'].feature_importances_
         sns.barplot(x=feature_importances, y=preprocessor.get_feature_names_out())
-        plt.title(f'Feature Importances in {model_name}')
+        plt.title(f'Feature Importances in {model_name}', fontsize=14)
+        plt.xticks(fontsize=18)
+        plt.yticks(fontsize=18)
+        plt.xlabel('Importance', fontsize=18)
+        plt.ylabel('Features', fontsize=18)
+        plt.tight_layout()
         plt.show()
     elif importance_method == 'permutation':
         result = permutation_importance(grid_search.best_estimator_, X_test, y_test, n_repeats=10, random_state=42)
         perm_sorted_idx = result.importances_mean.argsort()
         sns.boxplot(data=result.importances[perm_sorted_idx].T, orient="h", palette="vlag")
-        plt.title(f'Permutation Importances in {model_name}')
-        plt.yticks(perm_sorted_idx, preprocessor.get_feature_names_out()[perm_sorted_idx])
+        plt.title(f'Permutation Importances in {model_name}', fontsize=18)
+        plt.yticks(perm_sorted_idx, preprocessor.get_feature_names_out()[perm_sorted_idx], fontsize=18)
+        plt.xlabel('Importance Score', fontsize=18)
+        plt.tight_layout()
         plt.show()
